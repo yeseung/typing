@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한글 타자 연습</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background: #f8f9fa;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+
+
+        .container, .leaderboard-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .highlighted-text {
+            font-size: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+            word-wrap: break-word;
+            line-height: 1.8;
+        }
+
+        .correct { color: blue; }
+        .incorrect { color: red; }
+
+        #username, #inputField {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        #inputField:focus {
+            border-color: #5c6bc0;
+            outline: none;
+        }
+
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: green;
+            display: none;
+        }
+
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between; /* 좌, 중, 우 정렬 */
+            align-items: center;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        .leaderboard-title {
+            flex: 1; /* 가운데 정렬 */
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #5c6bc0;
+        }
+
+        .empty-space {
+            flex: 1; /* 오른쪽 정렬을 위한 빈 공간 */
+        }
+
+        .leaderboard-container {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .visitor-counter {
+            flex: 1; /* 왼쪽 정렬 */
+            text-align: right;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .menu-container {
+            flex: 1; /* 왼쪽 정렬 */
+            text-align: left;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .menu-button {
+            left: 5px;
+            top: 10px;
+            padding: 6px 6px;
+            background-color: #5c6bc0;
+            color: white;
+            font-size: 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #5c6bc0;
+            color: white;
+        }
+
+        td {
+            background-color: #fafafa;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f1f1f1;
+        }
+
+        @media (max-width: 480px) {
+            .container, .leaderboard-container { padding: 15px; }
+            .highlighted-text { font-size: 18px; }
+            #inputField { font-size: 16px; padding: 12px; }
+            th, td { font-size: 12px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 광고 영역 -->
+<div class="ad-container">
+    <ins class="kakao_ad_area" style="display:none;"
+         data-ad-unit="DAN-0UGKnHS7R0k23tvi"
+         data-ad-width="320"
+         data-ad-height="50"></ins>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+</div>
+
+<div class="container">
+    <h1>⌨ 한글 타자 연습</h1>
+    <input type="text" id="username" placeholder="사용자명을 입력하세요" autofocus>
+    <div class="highlighted-text" id="highlightedText"></div>
+    <input type="text" id="inputField" placeholder="문장을 입력하세요..." disabled>
+    <p class="result" id="resultMessage"></p>
+</div>
+
+<div class="leaderboard-container">
+    <div class="leaderboard-header">
+        <h3 class="menu-container"><a href="http://12345678910.shop/" class="menu-button">☰ 메뉴</a>
+            <h2 class="leaderboard-title">🏆 리더보드</h2>
+            <h3 class="visitor-counter">도전: 2</h3>
+    </div>
+    <table id="leaderboardTable">
+        <tr>
+            <th>순위</th>
+            <th>이름</th>
+            <th>타자속도(WPM)</th>
+        </tr>
+    </table>
+</div>
+
+<script>
+    const sentences = ["\uc778\uc0dd\uc740 \uc18d\ub3c4\uac00 \uc544\ub2c8\ub77c \ubc29\ud5a5\uc774\ub2e4.","\uc131\uacf5\uc740 \ucd5c\uc120\uc744 \ub2e4\ud55c \ud6c4\uc5d0 \uc624\ub294 \uac83\uc774\ub2e4.","\uafc8\uc744 \uafb8\ub294 \uac83\uc774 \uc544\ub2c8\ub77c \uafc8\uc744 \uc2e4\ud604\ud558\ub294 \uac83\uc774 \uc911\uc694\ud558\ub2e4.","\ucc9c \ub9c8\ub514 \ub9d0\ubcf4\ub2e4 \ud558\ub098\uc758 \ud589\ub3d9\uc774 \ub354 \uac00\uce58 \uc788\ub2e4.","\uae30\ud68c\ub294 \uae30\ub2e4\ub9ac\ub294 \uac83\uc774 \uc544\ub2c8\ub77c \ub9cc\ub4e4\uc5b4\uac00\ub294 \uac83\uc774\ub2e4.","\ud604\uc7ac\uc5d0 \ucda9\uc2e4\ud558\uba74 \ubbf8\ub798\ub294 \uc800\uc808\ub85c \ub2e4\uac00\uc628\ub2e4.","\uc791\uc740 \uc131\uacf5\uc744 \ubc18\ubcf5\ud558\uba74 \ud070 \uc131\uacf5\uc774 \uc628\ub2e4.","\uc2e4\ud328\ub780 \uc131\uacf5\uc744 \uc704\ud55c \uacfc\uc815\uc77c \ubfd0\uc774\ub2e4.","\uc131\uacf5\ud55c \uc0ac\ub78c\ub4e4\uc740 \uacc4\uc18d \ub3c4\uc804\ud55c\ub2e4.","\ud558\ub8e8\ud558\ub8e8\ub97c \ub9c8\uc9c0\ub9c9 \ub0a0\ucc98\ub7fc \uc0b4\uc544\ub77c.","\ub178\ub825 \uc5c6\ub294 \uc131\uacf5\uc740 \uc5c6\ub2e4.","\uc138\uc0c1\uc740 \uc900\ube44\ub41c \uc0ac\ub78c\uc5d0\uac8c \uae30\ud68c\ub97c \uc900\ub2e4.","\uc9c0\uae08 \uc774 \uc21c\uac04\uc744 \uc990\uaca8\ub77c.","\ubaa9\ud45c\ub97c \uc138\uc6b0\uace0 \uafb8\uc900\ud788 \ub178\ub825\ud558\ub77c.","\uc0dd\uac01\ud558\ub294 \ub300\ub85c \uc0b4\uc9c0 \uc54a\uc73c\uba74 \uc0ac\ub294 \ub300\ub85c \uc0dd\uac01\ud558\uac8c \ub41c\ub2e4.","\uc131\uacf5\uc740 \uba40\ub9ac \uc788\uc9c0 \uc54a\ub2e4, \ubc14\ub85c \uc9c0\uae08 \ud589\ub3d9\ud558\ub77c.","\uc808\ub300 \ud3ec\uae30\ud558\uc9c0 \ub9d0\ub77c, \uae30\uc801\uc740 \uac00\uae4c\uc774\uc5d0 \uc788\ub2e4.","\uac00\uc7a5 \uac15\ud55c \uc0ac\ub78c\uc740 \uacc4\uc18d \ub3c4\uc804\ud558\ub294 \uc0ac\ub78c\uc774\ub2e4.","\uafc8\uc744 \ud06c\uac8c \uac00\uc838\ub77c, \uadf8\ub9ac\uace0 \uc2e4\ud589\ud558\ub77c.","\ub05d\uae4c\uc9c0 \ud574\ub0b4\ub294 \uac83\uc774 \uac00\uc7a5 \uc911\uc694\ud558\ub2e4.","\ubcc0\ud654\ub294 \uc791\uc740 \uc2b5\uad00\uc5d0\uc11c \uc2dc\uc791\ub41c\ub2e4.","\uace0\ud1b5 \uc5c6\uc774 \uc5bb\ub294 \uac83\ub3c4 \uc5c6\ub2e4.","\uc624\ub298\uc758 \ub178\ub825\uc774 \ub0b4\uc77c\uc744 \ub9cc\ub4e0\ub2e4.","\ud589\ub3d9\uc774 \uc6b4\uba85\uc744 \uacb0\uc815\ud55c\ub2e4.","\uc704\uae30\ub294 \uae30\ud68c\uc758 \ub2e4\ub978 \uc774\ub984\uc774\ub2e4.","\ub118\uc5b4\uc9c0\uc9c0 \uc54a\ub294 \uc0ac\ub78c\uc774 \uac15\ud55c \uac83\uc774 \uc544\ub2c8\ub77c, \ub2e4\uc2dc \uc77c\uc5b4\uc11c\ub294 \uc0ac\ub78c\uc774 \uac15\ud558\ub2e4.","\ud589\ubcf5\uc740 \ubaa9\ud45c\uac00 \uc544\ub2c8\ub77c \uacfc\uc815\uc774\ub2e4.","\uc2dc\uac04\uc744 \uc9c0\ubc30\ud558\ub294 \uc790\uac00 \uc778\uc0dd\uc744 \uc9c0\ubc30\ud55c\ub2e4.","\uc131\uacf5\uc740 \uc6b4\uc774 \uc544\ub2c8\ub77c \uc2b5\uad00\uc774\ub2e4.","\ubd88\uac00\ub2a5\uc740 \ub178\ub825\ud558\uc9c0 \uc54a\ub294 \uc0ac\ub78c\uc758 \ubcc0\uba85\uc774\ub2e4.","\uc0dd\uac01\ubcf4\ub2e4 \ud589\ub3d9\uc774 \ub354 \uc911\uc694\ud558\ub2e4.","\ud560 \uc218 \uc788\ub2e4\uace0 \ubbff\ub294 \uc21c\uac04, \uac00\ub2a5\uc131\uc774 \uc5f4\ub9b0\ub2e4.","\ud3ec\uae30\ud558\uc9c0 \uc54a\ub294 \ud55c, \uc2e4\ud328\ub294 \uc5c6\ub2e4.","\ucd5c\uace0\uac00 \ub418\ub824\uba74 \ucd5c\uace0\ucc98\ub7fc \ud589\ub3d9\ud558\ub77c.","\uc791\uc740 \ubcc0\ud654\uac00 \ud070 \ucc28\uc774\ub97c \ub9cc\ub4e0\ub2e4.","\uc624\ub298\uc744 \uc774\uaca8\ub0b4\uba74 \ub0b4\uc77c\uc774 \uae30\ub2e4\ub9b0\ub2e4.","\uc790\uc2e0\uc744 \ubbff\uc5b4\uc57c \ub0a8\ub3c4 \ubbff\ub294\ub2e4.","\ud55c \uac78\uc74c\uc529 \ub098\uc544\uac00\uba74 \ubaa9\uc801\uc9c0\uc5d0 \ub2ff\ub294\ub2e4.","\ub178\ub825\uc740 \ubc30\uc2e0\ud558\uc9c0 \uc54a\ub294\ub2e4.","\uc131\uacf5\ud55c \ubbf8\ub798\ub97c \uc6d0\ud55c\ub2e4\uba74 \ud604\uc7ac\ub97c \ubc14\uafd4\ub77c.","\ub3c4\uc804 \uc5c6\ub294 \uc0b6\uc740 \uc758\ubbf8\uac00 \uc5c6\ub2e4.","\ud558\uace0 \uc2f6\uc740 \uc77c\uc744 \ud558\uba74 \uc778\uc0dd\uc774 \uc990\uac81\ub2e4.","\ub2f9\uc2e0\uc774 \uc0c1\uc0c1\ud560 \uc218 \uc788\ub2e4\uba74, \uc2e4\ud604\ud560 \uc218\ub3c4 \uc788\ub2e4.","\uc2e4\ud328\ub294 \ub05d\uc774 \uc544\ub2c8\ub77c \uc0c8\ub85c\uc6b4 \uc2dc\uc791\uc774\ub2e4.","\ud589\ubcf5\uc740 \uc2a4\uc2a4\ub85c \ub9cc\ub4dc\ub294 \uac83\uc774\ub2e4.","\uc790\uc2e0\uc744 \uc0ac\ub791\ud558\ub294 \uac83\uc774 \uc131\uacf5\uc758 \uccab\uac78\uc74c\uc774\ub2e4.","\uc624\ub298 \ud560 \uc77c\uc744 \ub0b4\uc77c\ub85c \ubbf8\ub8e8\uc9c0 \ub9d0\ub77c.","\uc2e4\ud328\ub97c \ub450\ub824\uc6cc\ud558\uc9c0 \ub9d0\uace0 \ub3c4\uc804\uc744 \uc990\uaca8\ub77c.","\uc131\uacf5\uc740 \uc900\ube44\ub41c \uc0ac\ub78c\uc5d0\uac8c \ucc3e\uc544\uc628\ub2e4.","\ub2f9\uc2e0\uc774 \ubbff\ub294 \ub9cc\ud07c \ub2f9\uc2e0\uc740 \uc131\uc7a5\ud55c\ub2e4."];
+    let sentence = sentences[Math.floor(Math.random() * sentences.length)];
+    let highlightedText = document.getElementById("highlightedText");
+    let inputField = document.getElementById("inputField");
+    let usernameField = document.getElementById("username");
+    let resultMessage = document.getElementById("resultMessage");
+    let startTime = null;
+
+    function saveUsername(username) {
+        localStorage.setItem("username", username);
+    }
+
+    function loadUsername() {
+        let savedUsername = localStorage.getItem("username");
+        if (savedUsername) {
+            usernameField.value = savedUsername;
+            inputField.disabled = false;
+        }
+    }
+
+    loadUsername();
+
+    usernameField.addEventListener("input", () => {
+        let username = usernameField.value.trim();
+        if (username !== "") {
+            saveUsername(username);
+            inputField.disabled = false;
+        }
+    });
+
+    function updateHighlightedText() {
+        highlightedText.innerHTML = sentence.split("").map(c => `<span>${c}</span>`).join("");
+    }
+
+    updateHighlightedText();
+
+    function updateTextHighlight() {
+        let typedText = inputField.value;
+        let highlightedHTML = "";
+
+        for (let i = 0; i < sentence.length; i++) {
+            if (i < typedText.length) {
+                if (typedText[i] === sentence[i]) {
+                    highlightedHTML += `<span class="correct">${sentence[i]}</span>`;
+                } else {
+                    highlightedHTML += `<span class="incorrect">${sentence[i]}</span>`;
+                }
+            } else {
+                highlightedHTML += `<span>${sentence[i]}</span>`;
+            }
+        }
+
+        highlightedText.innerHTML = highlightedHTML;
+    }
+
+    function checkTyping() {
+        let typedText = inputField.value.trim();
+        let username = usernameField.value.trim();
+        if (!username) {
+            alert("사용자명을 입력하세요!");
+            return;
+        }
+
+        let endTime = new Date();
+        let timeTaken = (endTime - startTime) / 1000;
+        let totalStrokes = typedText.length * 2;  // 한컴 기준 1글자 = 2타
+        let wpm = Math.round((totalStrokes / timeTaken) * 60) || 0; // 1분 환산
+
+        if (typedText === sentence.trim()) {
+            resultMessage.innerText = `🎉 성공! 타자속도: ${wpm} WPM`;
+            resultMessage.style.display = "block";
+            saveScore(username, wpm);
+            setTimeout(() => {
+                restartGame();
+            }, 2000);
+        } else {
+            resultMessage.innerText = "❌ 문장이 일치하지 않습니다.";
+            resultMessage.style.color = "red";
+            resultMessage.style.display = "block";
+        }
+    }
+
+    function restartGame() {
+        sentence = sentences[Math.floor(Math.random() * sentences.length)];
+        updateHighlightedText();
+        inputField.value = "";
+        resultMessage.style.display = "none";
+        startTime = null;
+    }
+
+    function saveScore(username, wpm) {
+        fetch("save_score.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `username=${encodeURIComponent(username)}&wpm=${wpm}`
+        }).then(() => {
+            updateLeaderboard();
+        });
+    }
+
+    function updateLeaderboard() {
+        fetch("leaderboard.php")
+        .then(response => response.json())
+        .then(data => {
+            let leaderboardTable = document.getElementById("leaderboardTable");
+            leaderboardTable.innerHTML = `
+                        <tr>
+                            <th>순위</th>
+                            <th>이름</th>
+                            <th>타자속도(WPM)</th>
+                        </tr>
+                    `;
+            data.forEach((entry, index) => {
+                let row = `<tr><td>${index + 1}</td><td>${entry.username}</td><td>${entry.wpm}</td></tr>`;
+                leaderboardTable.innerHTML += row;
+            });
+        });
+    }
+
+    updateLeaderboard();
+    inputField.addEventListener("input", updateTextHighlight);
+    inputField.addEventListener("keydown", event => {
+        if (!startTime) startTime = new Date();
+        if (event.key === "Enter") checkTyping();
+    });
+
+    // 붙여넣기 방지 (Ctrl+V, 마우스 우클릭, 모바일 붙여넣기)
+    inputField.addEventListener("paste", function(event) {
+        event.preventDefault();
+        alert("붙여넣기는 사용할 수 없습니다.");
+    });
+
+    inputField.addEventListener("keydown", function(event) {
+        if (event.ctrlKey && event.key === "v") {
+            event.preventDefault();
+            alert("붙여넣기는 사용할 수 없습니다.");
+        }
+    });
+
+    inputField.addEventListener("contextmenu", function(event) {
+        event.preventDefault();
+    });
+
+
+</script>
+</body>
+</html>
